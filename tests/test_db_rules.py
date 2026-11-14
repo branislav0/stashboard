@@ -47,53 +47,53 @@ def _tx(
 def test_match_counterparty_rule(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
-    db.add_rule(cats["Supermarkety"], "tesco", field="counterparty")
+    db.add_rule(cats["Groceries"], "tesco", field="counterparty")
     db.upsert_transactions(acc, [_tx("r1", cp="Tesco Stores")])
     rows = db.list_transactions(acc)
-    assert rows[0]["category_id"] == cats["Supermarkety"]
+    assert rows[0]["category_id"] == cats["Groceries"]
     assert rows[0]["manual_override"] == 0
 
 
 def test_match_remittance_rule(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
-    db.add_rule(cats["Bývanie"], "najomne", field="remittance")
+    db.add_rule(cats["Housing"], "najomne", field="remittance")
     db.upsert_transactions(acc, [_tx("r1", info="najomne april")])
     rows = db.list_transactions(acc)
-    assert rows[0]["category_id"] == cats["Bývanie"]
+    assert rows[0]["category_id"] == cats["Housing"]
 
 
 def test_priority_lower_wins(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
-    db.add_rule(cats["Supermarkety"], "shop", field="any", priority=200)
-    db.add_rule(cats["Bývanie"], "shop", field="any", priority=50)
+    db.add_rule(cats["Groceries"], "shop", field="any", priority=200)
+    db.add_rule(cats["Housing"], "shop", field="any", priority=50)
     db.upsert_transactions(acc, [_tx("r1", cp="Shop XYZ")])
     rows = db.list_transactions(acc)
-    assert rows[0]["category_id"] == cats["Bývanie"]
+    assert rows[0]["category_id"] == cats["Housing"]
 
 
 def test_invalid_regex_skipped(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
-    db.add_rule(cats["Supermarkety"], "[invalid(", field="any")
-    db.add_rule(cats["Bývanie"], "rent", field="any")
+    db.add_rule(cats["Groceries"], "[invalid(", field="any")
+    db.add_rule(cats["Housing"], "rent", field="any")
     db.upsert_transactions(acc, [_tx("r1", info="monthly rent")])
     rows = db.list_transactions(acc)
-    assert rows[0]["category_id"] == cats["Bývanie"]
+    assert rows[0]["category_id"] == cats["Housing"]
 
 
 def test_recategorize_skips_manual_override(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
     db.upsert_transactions(acc, [_tx("r1", cp="Tesco")])
-    db.set_transaction_category(acc, "r1", cats["Darčeky"], manual=True)
-    db.add_rule(cats["Supermarkety"], "tesco", field="counterparty")
+    db.set_transaction_category(acc, "r1", cats["Gifts"], manual=True)
+    db.add_rule(cats["Groceries"], "tesco", field="counterparty")
     changed, skipped = db.recategorize_all()
     assert skipped == 1
     assert changed == 0
     rows = db.list_transactions(acc)
-    assert rows[0]["category_id"] == cats["Darčeky"]
+    assert rows[0]["category_id"] == cats["Gifts"]
 
 
 def test_recategorize_updates_non_manual(tmp_db):
@@ -101,10 +101,10 @@ def test_recategorize_updates_non_manual(tmp_db):
     cats = {c["name"]: c["id"] for c in db.list_categories()}
     db.upsert_transactions(acc, [_tx("r1", cp="Tesco")])
     assert db.list_transactions(acc)[0]["category_id"] is None
-    db.add_rule(cats["Supermarkety"], "tesco", field="counterparty")
+    db.add_rule(cats["Groceries"], "tesco", field="counterparty")
     changed, _ = db.recategorize_all()
     assert changed == 1
-    assert db.list_transactions(acc)[0]["category_id"] == cats["Supermarkety"]
+    assert db.list_transactions(acc)[0]["category_id"] == cats["Groceries"]
 
 
 def test_generate_rules_from_manual(tmp_db):
@@ -118,8 +118,8 @@ def test_generate_rules_from_manual(tmp_db):
             _tx("r3", cp="Kaufland"),
         ],
     )
-    db.set_transaction_category(acc, "r1", cats["Supermarkety"], manual=True)
-    db.set_transaction_category(acc, "r2", cats["Supermarkety"], manual=True)
+    db.set_transaction_category(acc, "r1", cats["Groceries"], manual=True)
+    db.set_transaction_category(acc, "r2", cats["Groceries"], manual=True)
     added = db.generate_rules_from_manual()
     assert added == 1
     patterns = [r["pattern"] for r in db.list_rules()]

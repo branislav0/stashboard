@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="sk">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{% block title %}Stashboard{% endblock %}</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23111827'/%3E%3Ctext x='50' y='68' font-family='system-ui,sans-serif' font-size='62' font-weight='700' text-anchor='middle' fill='%23a78bfa'%3EG%3C/text%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23111827'/%3E%3Ctext x='50' y='68' font-family='system-ui,sans-serif' font-size='62' font-weight='700' text-anchor='middle' fill='%23a78bfa'%3ES%3C/text%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -165,24 +165,22 @@
 
     <nav class="main">
       <a href="/" class="{% if nav == 'dashboard' %}active{% endif %}">Dashboard</a>
-      <a href="/transactions" class="{% if nav == 'tx' %}active{% endif %}">Transakcie</a>
-      <a href="/accounts" class="{% if nav == 'accounts' %}active{% endif %}">Účty <span class="badge mono">{{ accounts_count or '' }}</span></a>
-      <a href="/categories" class="{% if nav == 'categories' %}active{% endif %}">Kategórie</a>
-      <a href="/master-plan" class="{% if nav == 'master-plan' %}active{% endif %}">Master plan</a>
-      <a href="/rules" class="{% if nav == 'rules' %}active{% endif %}">Pravidlá</a>
-      <a href="/summary" class="{% if nav == 'summary' %}active{% endif %}">Reporty</a>
-      <a href="/graf" class="{% if nav == 'graf' %}active{% endif %}">Graf</a>
-      <a href="/import" class="{% if nav == 'import' %}active{% endif %}">Import výpisu</a>
+      <a href="/transactions" class="{% if nav == 'tx' %}active{% endif %}">Transactions</a>
+      <a href="/accounts" class="{% if nav == 'accounts' %}active{% endif %}">Accounts <span class="badge mono">{{ accounts_count or '' }}</span></a>
+      <a href="/categories" class="{% if nav == 'categories' %}active{% endif %}">Categories</a>
+      <a href="/rules" class="{% if nav == 'rules' %}active{% endif %}">Rules</a>
+      <a href="/summary" class="{% if nav == 'summary' %}active{% endif %}">Reports</a>
+      <a href="/chart" class="{% if nav == 'chart' %}active{% endif %}">Chart</a>
+      <a href="/import" class="{% if nav == 'import' %}active{% endif %}">Import statement</a>
     </nav>
 
     <div class="scroll">
       {% if sb_months_available %}
       <form method="post" action="/sb-month" style="padding:8px 12px; border-bottom:1px solid var(--line);">
         <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
-        <label style="font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.5px;">Obdobie</label>
+        <label style="font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.5px;">Period</label>
         <select name="month" onchange="this.form.submit()" style="width:100%; margin-top:4px; padding:5px 8px; background:var(--bg-2); color:var(--ink); border:1px solid var(--line); border-radius:6px; font-size:12px;">
-          <option value="all" {% if sb_month == 'all' %}selected{% endif %}>Celý čas</option>
-          <option value="master-plan" {% if sb_month == 'master-plan' %}selected{% endif %}>★ Master plan</option>
+          <option value="all" {% if sb_month == 'all' %}selected{% endif %}>All time</option>
           {% for m in sb_months_available %}
             <option value="{{ m }}" {% if sb_month == m %}selected{% endif %}>{{ m }}</option>
           {% endfor %}
@@ -191,7 +189,7 @@
       {% endif %}
       <div class="section">
         <div class="section-title">
-          <span>Príjmy</span>
+          <span>Income</span>
           <span class="mono tnum total pos">{{ sidebar_income_total or '—' }}</span>
         </div>
         {% for c in sidebar_income %}
@@ -203,7 +201,7 @@
       </div>
       <div class="section">
         <div class="section-title">
-          <span>Výdaje</span>
+          <span>Expenses</span>
           <span class="mono tnum total neg">{{ sidebar_expense_total or '—' }}</span>
         </div>
         {% for c in sidebar_expense %}
@@ -231,18 +229,17 @@
     <div class="topbar">
       <h1>{% block heading %}{{ self.title() }}{% endblock %}</h1>
       <div class="spacer"></div>
-      <button class="btn" type="button" id="blur-toggle" title="Blur čísel">Blur</button>
+      <button class="btn" type="button" id="blur-toggle" title="Blur numbers">Blur</button>
       {% block topbar_actions %}{% endblock %}
     </div>
     <nav class="mobile-nav">
       <a href="/" class="{% if nav == 'dashboard' %}active{% endif %}">Dashboard</a>
-      <a href="/transactions" class="{% if nav == 'tx' %}active{% endif %}">Transakcie</a>
-      <a href="/accounts" class="{% if nav == 'accounts' %}active{% endif %}">Účty</a>
-      <a href="/categories" class="{% if nav == 'categories' %}active{% endif %}">Kategórie</a>
-      <a href="/master-plan" class="{% if nav == 'master-plan' %}active{% endif %}">Master plan</a>
-      <a href="/rules" class="{% if nav == 'rules' %}active{% endif %}">Pravidlá</a>
-      <a href="/summary" class="{% if nav == 'summary' %}active{% endif %}">Reporty</a>
-      <a href="/graf" class="{% if nav == 'graf' %}active{% endif %}">Graf</a>
+      <a href="/transactions" class="{% if nav == 'tx' %}active{% endif %}">Transactions</a>
+      <a href="/accounts" class="{% if nav == 'accounts' %}active{% endif %}">Accounts</a>
+      <a href="/categories" class="{% if nav == 'categories' %}active{% endif %}">Categories</a>
+      <a href="/rules" class="{% if nav == 'rules' %}active{% endif %}">Rules</a>
+      <a href="/summary" class="{% if nav == 'summary' %}active{% endif %}">Reports</a>
+      <a href="/chart" class="{% if nav == 'chart' %}active{% endif %}">Chart</a>
       <a href="/import" class="{% if nav == 'import' %}active{% endif %}">Import</a>
     </nav>
     <div class="body">
@@ -250,15 +247,15 @@
         {% for w in consent_warnings %}
           <div class="card" style="margin-bottom:12px; border-color: var(--neg); background: oklch(0.22 0.05 28 / 0.4);">
             <strong style="color: var(--neg);">
-              {% if w.expired %}⚠ Vypršala autorizácia{% else %}⏳ Autorizácia končí{% endif %}:
+              {% if w.expired %}⚠ Authorization expired{% else %}⏳ Authorization expires{% endif %}:
             </strong>
             {{ w.aspsp }} ({{ w.country }})
             {% if w.expired %}
-              už {{ -w.days_left }} dní — sync nebude fungovať.
+              {{ -w.days_left }} days ago — sync will not work.
             {% else %}
-              o {{ w.days_left }} dní ({{ w.valid_until }}).
+              in {{ w.days_left }} days ({{ w.valid_until }}).
             {% endif %}
-            <a class="btn btn-primary" style="margin-left:10px;" href="/connect/{{ w.aspsp }}/{{ w.country }}">Obnoviť</a>
+            <a class="btn btn-primary" style="margin-left:10px;" href="/connect/{{ w.aspsp }}/{{ w.country }}">Renew</a>
           </div>
         {% endfor %}
       {% endif %}

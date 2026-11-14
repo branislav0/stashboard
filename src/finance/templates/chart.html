@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Graf{% endblock %}
-{% block heading %}Cashflow — 12 mesiacov{% endblock %}
+{% block title %}Chart{% endblock %}
+{% block heading %}Cashflow — 12 months{% endblock %}
 
 {% block content %}
 {% for c in yearly.currencies %}
@@ -41,15 +41,15 @@
   </div>
 
   <div style="margin-top:18px; display:flex; gap:18px; font-size:11px; color:var(--ink-3);">
-    <span><span style="display:inline-block; width:10px; height:10px; background:var(--pos); border-radius:2px; vertical-align:middle; margin-right:4px;"></span>Príjem</span>
-    <span><span style="display:inline-block; width:10px; height:10px; background:var(--neg); border-radius:2px; vertical-align:middle; margin-right:4px;"></span>Výdaj</span>
+    <span><span style="display:inline-block; width:10px; height:10px; background:var(--pos); border-radius:2px; vertical-align:middle; margin-right:4px;"></span>Income</span>
+    <span><span style="display:inline-block; width:10px; height:10px; background:var(--neg); border-radius:2px; vertical-align:middle; margin-right:4px;"></span>Expenses</span>
   </div>
 </div>
 {% endfor %}
 
 {% if not yearly.currencies %}
   <div class="card" style="padding:24px; text-align:center; color:var(--ink-3);">
-    Žiadne dáta na zobrazenie.
+    No data to display.
   </div>
 {% endif %}
 {% endblock %}

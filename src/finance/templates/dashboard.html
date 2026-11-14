@@ -10,7 +10,7 @@
       {% endfor %}
     </select>
   </form>
-  <a class="btn btn-primary" href="/sync">↻ Sync všetky</a>
+  <a class="btn btn-primary" href="/sync">↻ Sync all</a>
 {% endblock %}
 
 {% block content %}
@@ -23,7 +23,7 @@
 {% if buffer %}
 <div class="card" style="margin-bottom:14px; padding:14px 18px;">
   <div style="margin-bottom:8px;">
-    <div class="label">Sporiaci cieľ {{ buffer.year }}</div>
+    <div class="label">Savings goal {{ buffer.year }}</div>
     <div style="font-size:20px; font-weight:600; margin-top:2px;">
       <span class="mono tnum">{{ buffer.saved }}</span>
       <span style="color:var(--ink-3); font-size:14px;"> / <span class="mono tnum">{{ buffer.target }}</span> CZK</span>
@@ -34,13 +34,13 @@
     <div style="height:100%; width:{{ buffer.pct }}%; background:#10B981; transition:width 0.4s;"></div>
   </div>
   <div style="margin-top:8px; font-size:12px; color:var(--ink-3);">
-    Zostáva výplat: <strong class="mono tnum" style="color:var(--ink);">{{ buffer.paychecks_left }}</strong> × <span class="mono tnum">{{ buffer.per_paycheck }}</span> CZK
+    Paychecks left: <strong class="mono tnum" style="color:var(--ink);">{{ buffer.paychecks_left }}</strong> × <span class="mono tnum">{{ buffer.per_paycheck }}</span> CZK
   </div>
 </div>
 {% endif %}
 
 <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">
-  Mesiac {{ month }}
+  Month {{ month }}
 </div>
 
 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">
@@ -49,11 +49,11 @@
       <div class="label" style="margin-bottom:6px;">{{ c.currency }}</div>
       <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
         <div>
-          <div style="font-size:10px; color:var(--ink-3);">Príjem</div>
+          <div style="font-size:10px; color:var(--ink-3);">Income</div>
           <div class="pos mono tnum" style="font-size:15px; font-weight:600;">{{ c.income }}</div>
         </div>
         <div>
-          <div style="font-size:10px; color:var(--ink-3);">Výdaje</div>
+          <div style="font-size:10px; color:var(--ink-3);">Expenses</div>
           <div class="neg mono tnum" style="font-size:15px; font-weight:600;">{{ c.expense }}</div>
         </div>
         <div>
@@ -64,9 +64,9 @@
     </div>
   {% endfor %}
   <div class="card" style="padding:12px 14px;">
-    <div class="label" style="margin-bottom:6px;">Transakcie</div>
+    <div class="label" style="margin-bottom:6px;">Transactions</div>
     <div class="mono tnum" style="font-size:18px; font-weight:600;">{{ kpi.count }}</div>
-    <div style="font-size:11px; color:var(--ink-3);">{{ kpi.uncategorized }} nezaradených</div>
+    <div style="font-size:11px; color:var(--ink-3);">{{ kpi.uncategorized }} uncategorized</div>
   </div>
 </div>
 
@@ -74,7 +74,7 @@
 <div class="card" style="margin-top:18px; padding:18px 20px;">
   <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px; flex-wrap:wrap; gap:12px;">
     <div>
-      <div class="label">Tento mesiac · {{ cashflow.currency }}</div>
+      <div class="label">This month · {{ cashflow.currency }}</div>
       <div style="margin-top:4px; font-size:13px; color:var(--ink-3);">
         <span class="pos mono tnum">+{{ cashflow.income }}</span>
         <span style="margin:0 8px;">·</span>
@@ -83,7 +83,7 @@
         Net <strong class="mono tnum {% if cashflow.net_pos %}pos{% else %}neg{% endif %}">{{ cashflow.net }}</strong>
       </div>
     </div>
-    <a href="/graf" class="btn" style="font-size:12px;">Ročný graf →</a>
+    <a href="/chart" class="btn" style="font-size:12px;">Yearly chart →</a>
   </div>
   <div style="position:relative; height:120px; padding-top:6px;">
     <div style="position:absolute; left:0; right:0; bottom:18px; border-top:1px dashed var(--line-2);"></div>
@@ -113,9 +113,9 @@
 
 <div class="split-grid" style="margin-top:18px;">
   <div>
-    <h2 class="block-title">Posledné transakcie</h2>
+    <h2 class="block-title">Recent transactions</h2>
     <table class="data">
-      <tr><th>Dátum</th><th>Counterparty</th><th>Kategória</th><th class="num">Suma</th></tr>
+      <tr><th>Date</th><th>Counterparty</th><th>Category</th><th class="num">Amount</th></tr>
       {% for t in recent_tx %}
         <tr>
           <td class="mono">{{ t.booking_date or '—' }}</td>
@@ -127,15 +127,15 @@
         </tr>
       {% endfor %}
       {% if not recent_tx %}
-        <tr><td colspan="4" style="color:var(--ink-3); text-align:center;">Žiadne transakcie</td></tr>
+        <tr><td colspan="4" style="color:var(--ink-3); text-align:center;">No transactions</td></tr>
       {% endif %}
     </table>
   </div>
 
   <div>
-    <h2 class="block-title">Účty</h2>
+    <h2 class="block-title">Accounts</h2>
     <table class="data">
-      <tr><th>Banka / IBAN</th><th class="num">Mena</th><th class="num">Tx</th></tr>
+      <tr><th>Bank / IBAN</th><th class="num">Currency</th><th class="num">Tx</th></tr>
       {% for a in accounts %}
         <tr>
           <td><a href="/accounts/{{ a.id }}/tx" style="color:var(--ink); font-weight:500;">{{ a.name or a.iban }}</a><br>
@@ -145,7 +145,7 @@
         </tr>
       {% endfor %}
       {% if not accounts %}
-        <tr><td colspan="3" style="color:var(--ink-3); text-align:center;">Žiadne účty — pripoj banku tlačidlom hore.</td></tr>
+        <tr><td colspan="3" style="color:var(--ink-3); text-align:center;">No accounts yet — connect a bank first.</td></tr>
       {% endif %}
     </table>
   </div>

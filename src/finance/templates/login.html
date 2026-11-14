@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sk">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -59,10 +59,10 @@
 <body>
   <form class="card" method="post" action="/login">
     <h1>Stashboard</h1>
-    <div class="sub">Zadaj heslo pre prístup k dashboardu</div>
-    <label for="pw">Heslo</label>
+    <div class="sub">Enter the password to access the dashboard</div>
+    <label for="pw">Password</label>
     <input id="pw" type="password" name="password" autofocus required />
-    <button type="submit">Prihlásiť</button>
+    <button type="submit">Sign in</button>
     {% if error %}<div class="err">{{ error }}</div>{% endif %}
   </form>
 </body>

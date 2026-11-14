@@ -57,7 +57,7 @@ def _reconnect(sid: str, valid_until: str):
                 "uid": f"uid-{sid}",
                 "account_id": {"iban": "SK0000000000000000000009"},
                 "currency": "EUR",
-                "name": "Účet",
+                "name": "Account",
             }
         ],
     }

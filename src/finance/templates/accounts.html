@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Účty{% endblock %}
-{% block heading %}Účty{% endblock %}
+{% block title %}Accounts{% endblock %}
+{% block heading %}Accounts{% endblock %}
 
 {% block topbar_actions %}{% endblock %}
 
@@ -21,19 +21,19 @@
             <div class="mono tnum" style="font-size:18px; font-weight:600;">{{ a.tx_count }}</div>
           </div>
           <div>
-            <div style="font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.06em;">Nezaradené</div>
+            <div style="font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.06em;">Uncategorized</div>
             <div class="mono tnum" style="font-size:18px; font-weight:600; {% if a.uncat > 0 %}color:var(--neg);{% endif %}">{{ a.uncat }}</div>
           </div>
         </div>
         <div style="display:flex; gap:6px; margin-top:14px;">
-          <a class="btn" href="/accounts/{{ a.id }}/tx" style="flex:1; text-align:center;">Transakcie</a>
+          <a class="btn" href="/accounts/{{ a.id }}/tx" style="flex:1; text-align:center;">Transactions</a>
           <a class="btn btn-primary" href="/accounts/{{ a.id }}/sync" style="flex:1; text-align:center;">↻ Sync</a>
         </div>
       </div>
     {% endfor %}
     {% if not accounts %}
       <div class="card" style="grid-column: 1/-1; text-align:center; padding:48px; color:var(--ink-3);">
-        Žiadne účty. Pripoj banku tlačidlom hore.
+        No accounts yet. Connect a bank first.
       </div>
     {% endif %}
   </div>

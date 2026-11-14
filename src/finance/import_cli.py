@@ -1,10 +1,10 @@
-"""CLI import výpisu ČSOB CSV — headless verzia POST /import.
+"""CLI import of a ČSOB CSV statement — headless version of POST /import.
 
-Použitie:
-    uv run python -m finance.import_cli /cesta/k/vypis.csv
+Usage:
+    uv run python -m finance.import_cli /path/to/statement.csv
 
-Vytlačí jednoriadkový výsledok na stdout a skončí s kódom 0 pri úspechu,
-1 pri chybe. Určené na volanie z MC Telegram bota (drop CSV → import).
+Prints a one-line result to stdout and exits with code 0 on success, 1 on error.
+Meant to be called from scripts or automations (drop a CSV → import).
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ def import_csv(path: str | Path) -> str:
     content = Path(path).read_bytes()
     info, txs = parse_csob_csv(content)
     if not txs:
-        raise ValueError("Žiadne transakcie v súbore")
+        raise ValueError("No transactions in the file")
 
     account_no = info["account_no"] or "manual"
     currency = info["currency"]
@@ -41,20 +41,20 @@ def import_csv(path: str | Path) -> str:
     ids = db.save_session_and_accounts(payload)
     inserted, updated = db.upsert_transactions(ids[0], txs)
     fx_fetched, _ = db.backfill_fx_rates()
-    fx_note = f", FX kurzy +{fx_fetched}" if fx_fetched else ""
-    return f"✅ ČSOB {account_no}: {inserted} nových, {updated} aktualizovaných{fx_note}"
+    fx_note = f", FX rates +{fx_fetched}" if fx_fetched else ""
+    return f"✅ ČSOB {account_no}: {inserted} new, {updated} updated{fx_note}"
 
 
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     if len(args) != 1:
-        print("Použitie: python -m finance.import_cli <vypis.csv>", file=sys.stderr)
+        print("Usage: python -m finance.import_cli <statement.csv>", file=sys.stderr)
         return 2
     db.init_db()
     try:
         print(import_csv(args[0]))
     except (ValueError, UnicodeDecodeError, FileNotFoundError) as e:
-        print(f"❌ Import zlyhal: {e}", file=sys.stderr)
+        print(f"❌ Import failed: {e}", file=sys.stderr)
         return 1
     return 0
 

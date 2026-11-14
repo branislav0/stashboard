@@ -44,13 +44,13 @@ def _upsert(lines: list[str], key: str, value: str) -> list[str]:
 
 def main() -> int:
     load_dotenv(ENV_PATH)
-    pw1 = getpass.getpass("Nové heslo: ")
+    pw1 = getpass.getpass("New password: ")
     if len(pw1) < 6:
-        print("Heslo musí mať aspoň 6 znakov.", file=sys.stderr)
+        print("The password must be at least 6 characters long.", file=sys.stderr)
         return 1
     pw2 = getpass.getpass("Zopakuj heslo: ")
     if pw1 != pw2:
-        print("Heslá sa nezhodujú.", file=sys.stderr)
+        print("The passwords do not match.", file=sys.stderr)
         return 1
 
     h = hash_password(pw1)
@@ -64,11 +64,11 @@ def main() -> int:
     ):
         new_secret = secrets.token_urlsafe(32)
         lines = _upsert(lines, "APP_SECRET_KEY", new_secret)
-        print("APP_SECRET_KEY vygenerovaný a uložený.")
+        print("APP_SECRET_KEY generated and saved.")
 
     _write_env(lines)
-    print(f"Heslo uložené do {ENV_PATH}")
-    print("Reštartuj server aby sa zmena prejavila.")
+    print(f"Password saved to {ENV_PATH}")
+    print("Restart the server for the change to take effect.")
     return 0
 
 

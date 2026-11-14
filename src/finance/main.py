@@ -31,9 +31,8 @@ def _fmt(amount: float, currency: str = "", decimals: int = 0) -> str:
 
 
 _BUFFER_TARGET_CZK = float(os.getenv("BUFFER_TARGET_CZK", "50000"))
-_BUFFER_CATEGORY_NAME = os.getenv("BUFFER_CATEGORY_NAME", "Sporenie")
+_BUFFER_CATEGORY_NAME = os.getenv("BUFFER_CATEGORY_NAME", "Savings")
 _BUFFER_PER_PAYCHECK_CZK = float(os.getenv("BUFFER_PER_PAYCHECK_CZK", "5000"))
-_MASTER_PLAN_START = os.getenv("MASTER_PLAN_START", "2026-05-13")
 
 
 _CASHFLOW_CURRENCIES = {"CZK"}
@@ -207,104 +206,6 @@ def _buffer_progress(today: date) -> dict:
     }
 
 
-def _master_plan_period(today: date) -> tuple[str, str]:
-    """Return (period_start_iso, period_end_iso) for budget tracking.
-
-    Logic: master plan started on MASTER_PLAN_START (e.g. 2026-05-13).
-    - If today is in the same month as start → period = start..today
-    - If today is in a later month → period = 1st-of-month..today
-    """
-    try:
-        start = date.fromisoformat(_MASTER_PLAN_START)
-    except ValueError:
-        start = today.replace(day=1)
-    if today.year == start.year and today.month == start.month:
-        period_start = start
-    else:
-        period_start = today.replace(day=1)
-    return period_start.isoformat(), today.isoformat()
-
-
-def _master_plan_progress(today: date) -> dict:
-    """Compute per-category budget vs. spent for the current master-plan period."""
-    period_start, period_end = _master_plan_period(today)
-    cats = db.list_categories()
-    budgeted = [dict(c) for c in cats if c["monthly_budget_czk"] and c["kind"] == "expense"]
-    if not budgeted:
-        return {
-            "period_start": period_start,
-            "period_end": period_end,
-            "rows": [],
-            "total_budget": 0,
-            "total_spent": 0,
-            "total_remaining": 0,
-            "total_pct": 0,
-        }
-
-    spent: dict[int, float] = {c["id"]: 0.0 for c in budgeted}
-    with db.connect() as conn:
-        for r in conn.execute(
-            "SELECT t.category_id, t.booking_date, t.currency, t.amount "
-            "FROM transactions t "
-            "WHERE t.credit_debit = 'DBIT' "
-            "AND t.booking_date >= ? AND t.booking_date <= ? "
-            "AND COALESCE(t.hidden, 0) = 0 "
-            "AND t.category_id IS NOT NULL",
-            (period_start, period_end),
-        ):
-            cid = r["category_id"]
-            if cid not in spent:
-                continue
-            try:
-                amt = float(r["amount"])
-            except (TypeError, ValueError):
-                continue
-            if r["currency"] != "CZK":
-                converted = db.to_czk(amt, r["currency"], r["booking_date"])
-                if converted is None:
-                    continue
-                amt = converted
-            spent[cid] += amt
-
-    items = []
-    total_budget = total_spent = 0.0
-    for c in budgeted:
-        budget = float(c["monthly_budget_czk"])
-        sp = spent[c["id"]]
-        remaining = budget - sp
-        pct = min(100, int(round((sp / budget) * 100))) if budget else 0
-        items.append(
-            {
-                "id": c["id"],
-                "name": c["name"],
-                "budget": budget,
-                "budget_label": _fmt(budget),
-                "spent": sp,
-                "spent_label": _fmt(sp),
-                "remaining": remaining,
-                "remaining_label": _fmt(abs(remaining)),
-                "remaining_pos": remaining >= 0,
-                "pct": pct,
-                "over": sp > budget,
-            }
-        )
-        total_budget += budget
-        total_spent += sp
-    items.sort(key=lambda x: x["pct"], reverse=True)
-    total_remaining = total_budget - total_spent
-    total_pct = min(100, int(round((total_spent / total_budget) * 100))) if total_budget else 0
-    return {
-        "period_start": period_start,
-        "period_end": period_end,
-        "rows": items,
-        "total_budget_label": _fmt(total_budget),
-        "total_spent_label": _fmt(total_spent),
-        "total_remaining_label": _fmt(abs(total_remaining)),
-        "total_remaining_pos": total_remaining >= 0,
-        "total_pct": total_pct,
-    }
-
-
 def _sidebar_months(count: int = 12) -> list[str]:
     """Return last N months as YYYY-MM strings, most recent first."""
     out = []
@@ -318,42 +219,23 @@ def _sidebar_months(count: int = 12) -> list[str]:
 def _sb_period(sb_month: str) -> tuple[str | None, str | None]:
     """Map sb_month cookie value to (date_from, date_to) inclusive.
 
-    Special values:
-      - "all"          → (None, None)
-      - "master-plan"  → (MASTER_PLAN_START, today)
-      - "YYYY-MM"      → (1st, last) of that month, BUT if MASTER_PLAN_START
-                         falls in that month, the month is capped at the
-                         day BEFORE master plan starts (e.g. May → 01.05..12.05)
+    "all" (or anything unrecognized) → (None, None); "YYYY-MM" → that month.
     """
-    if sb_month == "all":
-        return None, None
-    today = date.today()
-    if sb_month == "master-plan":
-        return _MASTER_PLAN_START, today.isoformat()
     if len(sb_month) == 7 and sb_month[4] == "-":
         try:
             y, m = int(sb_month[:4]), int(sb_month[5:7])
+            start = date(y, m, 1)
         except ValueError:
             return None, None
-        start = date(y, m, 1)
         nxt = date(y + 1, 1, 1) if m == 12 else date(y, m + 1, 1)
-        end = nxt - timedelta(days=1)
-        try:
-            mp = date.fromisoformat(_MASTER_PLAN_START)
-            if mp.year == y and mp.month == m:
-                end = mp - timedelta(days=1)
-                if end < start:
-                    return None, None  # empty period
-        except ValueError:
-            pass
-        return start.isoformat(), end.isoformat()
+        return start.isoformat(), (nxt - timedelta(days=1)).isoformat()
     return None, None
 
 
 def _sidebar_context(request: Request | None = None) -> dict:
     """Build the sidebar category-totals + sync-status block, primary currency CZK.
 
-    Reads cookie `sb_month`: "YYYY-MM" / "master-plan" / "all" / missing.
+    Reads cookie `sb_month`: "YYYY-MM" / "all" / missing.
     """
     today = date.today()
     default_month = today.strftime("%Y-%m")
@@ -456,7 +338,7 @@ def login_submit(request: Request, password: str = Form(...)):
     stored = auth.password_hash_from_env()
     if not stored or not auth.verify_password(password, stored):
         return templates.TemplateResponse(
-            request, "login.html", {"error": "Nesprávne heslo."}, status_code=401
+            request, "login.html", {"error": "Incorrect password."}, status_code=401
         )
     token = auth.create_session_token()
     resp = RedirectResponse(url="/", status_code=303)
@@ -589,7 +471,7 @@ def categorize_ai() -> RedirectResponse:
     txs = db.list_uncategorized_transactions(limit=200)
     if not txs:
         return RedirectResponse(
-            url="/transactions?ai_msg=Žiadne+nezaradené+transakcie", status_code=303
+            url="/transactions?ai_msg=No+uncategorized+transactions", status_code=303
         )
     cats = db.categories_with_parent_name()
     examples = db.list_manual_examples(limit=40)
@@ -614,7 +496,7 @@ def categorize_ai() -> RedirectResponse:
         except Exception:
             continue
     skipped = len(txs) - applied
-    msg = f"AI+zaradila+{applied}+tx,+{skipped}+nechala+nezaradených"
+    msg = f"AI+categorized+{applied}+transactions,+left+{skipped}+uncategorized"
     return RedirectResponse(url=f"/transactions?uncat=1&ai_msg={msg}", status_code=303)
 
 
@@ -643,33 +525,21 @@ def set_sidebar_month(request: Request, month: str = Form(...), next: str = Form
     """Set the sidebar month filter cookie and redirect back."""
     safe_next = next if next.startswith("/") else "/"
     resp = RedirectResponse(url=safe_next, status_code=303)
-    if month in ("all", "master-plan") or (len(month) == 7 and month[4] == "-"):
+    if month == "all" or (len(month) == 7 and month[4] == "-"):
         resp.set_cookie("sb_month", month, max_age=60 * 60 * 24 * 365, samesite="lax")
     return resp
 
 
-@app.get("/graf", response_class=HTMLResponse)
-def graf_view(request: Request):
+@app.get("/chart", response_class=HTMLResponse)
+def chart_view(request: Request):
     today = date.today()
     yearly = _cashflow_history(today, months=12)
     ctx = {
-        "nav": "graf",
+        "nav": "chart",
         "yearly": yearly,
         **_sidebar_context(request),
     }
-    return templates.TemplateResponse(request, "graf.html", ctx)
-
-
-@app.get("/master-plan", response_class=HTMLResponse)
-def master_plan_view(request: Request):
-    today = date.today()
-    plan = _master_plan_progress(today)
-    ctx = {
-        "nav": "master-plan",
-        "plan": plan,
-        **_sidebar_context(request),
-    }
-    return templates.TemplateResponse(request, "master_plan.html", ctx)
+    return templates.TemplateResponse(request, "chart.html", ctx)
 
 
 @app.get("/categories", response_class=HTMLResponse)
@@ -755,7 +625,7 @@ async def import_submit(file: UploadFile = File(...)) -> RedirectResponse:
     except (ValueError, UnicodeDecodeError) as e:
         return RedirectResponse(url=f"/import?err={escape(str(e))}", status_code=303)
     if not txs:
-        return RedirectResponse(url="/import?err=Žiadne+transakcie+v+súbore", status_code=303)
+        return RedirectResponse(url="/import?err=No+transactions+in+the+file", status_code=303)
 
     account_no = info["account_no"] or "manual"
     currency = info["currency"]
@@ -779,7 +649,7 @@ async def import_submit(file: UploadFile = File(...)) -> RedirectResponse:
     inserted, updated = db.upsert_transactions(account_id, txs)
     fx_fetched, _ = db.backfill_fx_rates()
     fx_note = f"+(FX:+{fx_fetched})" if fx_fetched else ""
-    msg = f"Importovaných+{inserted}+nových,+{updated}+aktualizovaných{fx_note}"
+    msg = f"Imported+{inserted}+new,+{updated}+updated{fx_note}"
     return RedirectResponse(url=f"/import?ok={msg}", status_code=303)
 
 

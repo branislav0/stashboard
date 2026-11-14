@@ -79,24 +79,23 @@ CREATE TABLE IF NOT EXISTS fx_rates (
 """
 
 SEED_CATEGORIES: list[tuple[str, str, list[str]]] = [
-    ("Príjem z práce", "income", []),
-    ("Vedľajší príjem", "income", []),
-    ("Rodina", "income", []),
-    ("Iné príjmy", "income", []),
-    ("Bývanie", "expense", []),
-    ("Nafta / doprava", "expense", []),
-    ("Supermarkety", "expense", []),
-    ("Oblečenie, topánky", "expense", []),
-    ("Tabak", "expense", []),
-    ("Reštaurácie / fastfood", "expense", []),
+    ("Salary", "income", []),
+    ("Side income", "income", []),
+    ("Family", "income", []),
+    ("Other income", "income", []),
+    ("Housing", "expense", []),
+    ("Fuel / transport", "expense", []),
+    ("Groceries", "expense", []),
+    ("Clothing, shoes", "expense", []),
+    ("Restaurants / fast food", "expense", []),
     ("Subscriptions", "expense", []),
-    ("Darčeky", "expense", []),
-    ("Zábava (hry, kultúra)", "expense", []),
-    ("Fitness a zdravie", "expense", []),
-    ("Hygiena", "expense", []),
-    ("Výber z bankomatu", "expense", []),
-    ("Investície", "expense", ["Akcie", "Crypto"]),
-    ("Interné presuny / FX", "transfer", []),
+    ("Gifts", "expense", []),
+    ("Entertainment", "expense", []),
+    ("Fitness and health", "expense", []),
+    ("Personal care", "expense", []),
+    ("ATM withdrawal", "expense", []),
+    ("Investments", "expense", ["Stocks", "Crypto"]),
+    ("Internal transfers / FX", "transfer", []),
 ]
 
 
@@ -182,13 +181,12 @@ def _migrate_categories_allow_transfer() -> None:
 def _ensure_transfer_category() -> None:
     with connect() as conn:
         exists = conn.execute(
-            "SELECT id FROM categories WHERE name = ? AND parent_id IS NULL",
-            ("Interné presuny / FX",),
+            "SELECT id FROM categories WHERE kind = 'transfer' LIMIT 1"
         ).fetchone()
         if not exists:
             conn.execute(
                 "INSERT INTO categories (name, parent_id, kind) VALUES (?, NULL, 'transfer')",
-                ("Interné presuny / FX",),
+                ("Internal transfers / FX",),
             )
 
 
@@ -296,13 +294,13 @@ def get_account(account_id: int) -> sqlite3.Row | None:
 
 
 _TX_TYPE_LABELS = {
-    "CCRD": "Kartová platba",
-    "RCDT": "Prijatý prevod",
-    "ICDT": "Odchádzajúci prevod",
-    "DDBT": "Inkaso",
-    "STDO": "Trvalý príkaz",
-    "MCRD": "Mobilná platba",
-    "ACMT": "Bankový poplatok",
+    "CCRD": "Card payment",
+    "RCDT": "Incoming transfer",
+    "ICDT": "Outgoing transfer",
+    "DDBT": "Direct debit",
+    "STDO": "Standing order",
+    "MCRD": "Mobile payment",
+    "ACMT": "Bank fee",
 }
 
 
@@ -513,7 +511,7 @@ def transactions_for_summary(
     with connect() as conn:
         return conn.execute(
             f"""SELECT
-                 COALESCE(c.name, '(nezaradené)') AS category_name,
+                 COALESCE(c.name, '(uncategorized)') AS category_name,
                  COALESCE(c.kind, '') AS kind,
                  t.booking_date,
                  t.currency,
@@ -541,7 +539,7 @@ def summary_by_category(month: str | None = None) -> list[sqlite3.Row]:
     with connect() as conn:
         return conn.execute(
             f"""SELECT
-                 COALESCE(c.name, '(nezaradené)') AS category_name,
+                 COALESCE(c.name, '(uncategorized)') AS category_name,
                  COALESCE(c.kind, '') AS kind,
                  t.currency,
                  t.credit_debit,

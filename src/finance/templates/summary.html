@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Reporty{% endblock %}
-{% block heading %}Reporty / Summary{% endblock %}
+{% block title %}Reports{% endblock %}
+{% block heading %}Reports{% endblock %}
 
 {% macro section(title, items, neutral=False) %}
   {% if items %}
     <h2 class="block-title" style="margin-top:24px;">{{ title }}</h2>
     <table class="data">
       <tr>
-        <th>Kategória</th>
-        <th>Mena</th>
+        <th>Category</th>
+        <th>Currency</th>
         <th class="num">In</th>
         <th class="num">Out</th>
         <th class="num">Net</th>
@@ -29,9 +29,9 @@
 {% endmacro %}
 
 {% block content %}
-  {{ section('Príjmy / Výdavky', main_items) }}
-  {{ section('Interné presuny (nerátajú sa do In/Out)', transfer_items, neutral=True) }}
+  {{ section('Income / Expenses', main_items) }}
+  {{ section('Internal transfers (not counted in In/Out)', transfer_items, neutral=True) }}
   {% if not main_items and not transfer_items %}
-    <p style="color:var(--ink-3); text-align:center; padding:48px;">Žiadne dáta zatiaľ. Pripoj banku a synchronizuj.</p>
+    <p style="color:var(--ink-3); text-align:center; padding:48px;">No data yet. Connect a bank and sync.</p>
   {% endif %}
 {% endblock %}

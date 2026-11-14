@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Pravidlá{% endblock %}
-{% block heading %}Pravidlá auto-kategorizácie{% endblock %}
+{% block title %}Rules{% endblock %}
+{% block heading %}Auto-categorization rules{% endblock %}
 
 {% block topbar_actions %}
   <form class="inline" method="post" action="/rules/generate">
@@ -18,11 +18,11 @@
     </div>
   {% endif %}
 
-  <h2 class="block-title">Pridať pravidlo</h2>
+  <h2 class="block-title">Add rule</h2>
   <div class="card" style="margin-bottom:24px;">
     <form method="post" action="/rules" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
       <select name="category_id" required>
-        <option value="">— kategória —</option>
+        <option value="">— category —</option>
         {% for c in cats %}
           <option value="{{ c.id }}">{% if c.parent_id %}↳ {% endif %}{{ c.name }}</option>
         {% endfor %}
@@ -34,17 +34,17 @@
       </select>
       <input type="text" name="pattern" placeholder="regex pattern" style="flex:1; min-width:240px;" required>
       <input type="number" name="priority" value="100" style="width:80px;">
-      <button class="btn btn-primary" type="submit">Pridať</button>
+      <button class="btn btn-primary" type="submit">Add</button>
     </form>
   </div>
 
-  <h2 class="block-title">Existujúce pravidlá ({{ rules|length }})</h2>
+  <h2 class="block-title">Existing rules ({{ rules|length }})</h2>
   <table class="data">
     <tr>
-      <th class="num">Priorita</th>
+      <th class="num">Priority</th>
       <th>Field</th>
       <th>Pattern</th>
-      <th>Kategória</th>
+      <th>Category</th>
       <th></th>
     </tr>
     {% for r in rules %}
@@ -61,7 +61,7 @@
       </tr>
     {% endfor %}
     {% if not rules %}
-      <tr><td colspan="5" style="text-align:center; color:var(--ink-3); padding:24px;">Žiadne pravidlá</td></tr>
+      <tr><td colspan="5" style="text-align:center; color:var(--ink-3); padding:24px;">No rules</td></tr>
     {% endif %}
   </table>
 {% endblock %}

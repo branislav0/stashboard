@@ -36,7 +36,7 @@ def parse_csob_csv(content: bytes) -> tuple[dict, list[dict]]:
     text = content.decode("utf-8-sig")
     lines = text.splitlines()
     if not lines:
-        raise ValueError("Prázdny súbor")
+        raise ValueError("Empty file")
 
     account_no = ""
     m = re.search(r"Pohyby na účtu\s+(\S+)", lines[0])
@@ -49,7 +49,7 @@ def parse_csob_csv(content: bytes) -> tuple[dict, list[dict]]:
     fields = set(reader.fieldnames or [])
     if not CSOB_CZ_HEADERS.issubset(fields):
         missing = CSOB_CZ_HEADERS - fields
-        raise ValueError(f"Neznámy formát CSV (chýbajú stĺpce: {', '.join(missing)})")
+        raise ValueError(f"Unknown CSV format (missing columns: {', '.join(missing)})")
 
     txs: list[dict] = []
     currency = "CZK"

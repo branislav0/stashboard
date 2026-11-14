@@ -15,21 +15,21 @@ def test_insert_then_update_counts(tmp_db):
 def test_resync_preserves_note(tmp_db):
     acc = _make_session_and_account()
     db.upsert_transactions(acc, [_tx("r1", cp="A")])
-    db.set_transaction_note(acc, "r1", "moja poznámka")
+    db.set_transaction_note(acc, "r1", "my note")
     db.upsert_transactions(acc, [_tx("r1", cp="A")])
     rows = db.list_transactions(acc)
-    assert rows[0]["note"] == "moja poznámka"
+    assert rows[0]["note"] == "my note"
 
 
 def test_resync_preserves_manual_category(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
     db.upsert_transactions(acc, [_tx("r1", cp="A")])
-    db.set_transaction_category(acc, "r1", cats["Darčeky"], manual=True)
-    db.add_rule(cats["Supermarkety"], "A", field="counterparty")
+    db.set_transaction_category(acc, "r1", cats["Gifts"], manual=True)
+    db.add_rule(cats["Groceries"], "A", field="counterparty")
     db.upsert_transactions(acc, [_tx("r1", cp="A")])
     rows = db.list_transactions(acc)
-    assert rows[0]["category_id"] == cats["Darčeky"]
+    assert rows[0]["category_id"] == cats["Gifts"]
     assert rows[0]["manual_override"] == 1
 
 
@@ -44,8 +44,8 @@ def test_tx_type_label_from_code(tmp_db):
         ],
     )
     by_ref = {r["entry_reference"]: r for r in db.list_transactions(acc)}
-    assert by_ref["r1"]["tx_type"] == "Kartová platba"
-    assert by_ref["r2"]["tx_type"] == "Prijatý prevod"
+    assert by_ref["r1"]["tx_type"] == "Card payment"
+    assert by_ref["r2"]["tx_type"] == "Incoming transfer"
     assert by_ref["r3"]["tx_type"] is None
 
 
@@ -67,7 +67,7 @@ def test_only_uncategorized_filter(tmp_db):
     acc = _make_session_and_account()
     cats = {c["name"]: c["id"] for c in db.list_categories()}
     db.upsert_transactions(acc, [_tx("r1", cp="A"), _tx("r2", cp="B")])
-    db.set_transaction_category(acc, "r1", cats["Darčeky"], manual=True)
+    db.set_transaction_category(acc, "r1", cats["Gifts"], manual=True)
     rows = db.list_transactions(acc, only_uncategorized=True)
     assert len(rows) == 1
     assert rows[0]["entry_reference"] == "r2"

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Kategórie{% endblock %}
-{% block heading %}Kategórie{% endblock %}
+{% block title %}Categories{% endblock %}
+{% block heading %}Categories{% endblock %}
 
 {% macro render_list(roots, by_parent, kind) %}
   <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:8px;">
@@ -8,11 +8,11 @@
       <div class="card" style="padding:12px 14px;">
         <form class="inline" method="post" action="/categories/{{ r.id }}/rename" style="width:100%; display:flex; gap:6px;">
           <input type="text" name="name" value="{{ r.name }}" style="flex:1; min-width:0; font-weight:600; font-size:13px;">
-          <button class="btn" type="submit" title="Premenovať" style="flex-shrink:0;">✎</button>
+          <button class="btn" type="submit" title="Rename" style="flex-shrink:0;">✎</button>
         </form>
         <form class="inline" method="post" action="/categories/{{ r.id }}/delete" style="margin-top:4px;"
-              onsubmit="return confirm('Zmazať kategóriu {{ r.name }}? Transakcie sa stanú nezaradenými.');">
-          <button class="btn" type="submit" style="color:var(--neg);">✕ Zmazať</button>
+              onsubmit="return confirm('Delete category {{ r.name }}? Its transactions will become uncategorized.');">
+          <button class="btn" type="submit" style="color:var(--neg);">✕ Delete</button>
         </form>
         {% if kind == 'expense' %}
           <form class="inline" method="post" action="/categories/{{ r.id }}/budget" style="margin-top:6px; display:flex; gap:4px; align-items:center;">
@@ -32,7 +32,7 @@
                   <button class="btn" type="submit" style="font-size:10px; padding:2px 6px; flex-shrink:0;">✎</button>
                 </form>
                 <form class="inline" method="post" action="/categories/{{ c.id }}/delete"
-                      onsubmit="return confirm('Zmazať {{ c.name }}?');" style="flex-shrink:0;">
+                      onsubmit="return confirm('Delete {{ c.name }}?');" style="flex-shrink:0;">
                   <button class="btn" type="submit" style="color:var(--neg); font-size:10px; padding:2px 6px;">✕</button>
                 </form>
               </li>
@@ -42,7 +42,7 @@
         <form class="inline" method="post" action="/categories/add" style="margin-top:6px; display:flex; gap:4px;">
           <input type="hidden" name="kind" value="{{ kind }}">
           <input type="hidden" name="parent_id" value="{{ r.id }}">
-          <input type="text" name="name" placeholder="+ podkategória" style="font-size:11px; padding:2px 6px; flex:1; min-width:0;">
+          <input type="text" name="name" placeholder="+ subcategory" style="font-size:11px; padding:2px 6px; flex:1; min-width:0;">
           <button class="btn" type="submit" style="font-size:10px; padding:2px 6px; flex-shrink:0;">+</button>
         </form>
       </div>
@@ -53,25 +53,25 @@
 {% macro add_root_form(kind, label) %}
   <form class="inline" method="post" action="/categories/add" style="margin-top:8px;">
     <input type="hidden" name="kind" value="{{ kind }}">
-    <input type="text" name="name" placeholder="+ nová {{ label }}" style="min-width:200px;">
-    <button class="btn btn-primary" type="submit">Pridať</button>
+    <input type="text" name="name" placeholder="+ new {{ label }}" style="min-width:200px;">
+    <button class="btn btn-primary" type="submit">Add</button>
   </form>
 {% endmacro %}
 
 {% block content %}
-  <h2 class="block-title pos">Príjmy</h2>
+  <h2 class="block-title pos">Income</h2>
   {{ render_list(income_roots, by_parent, 'income') }}
-  {{ add_root_form('income', 'kategória príjmu') }}
+  {{ add_root_form('income', 'income category') }}
 
-  <h2 class="block-title neg" style="margin-top:24px;">Výdavky</h2>
+  <h2 class="block-title neg" style="margin-top:24px;">Expenses</h2>
   {{ render_list(expense_roots, by_parent, 'expense') }}
-  {{ add_root_form('expense', 'kategória výdaja') }}
+  {{ add_root_form('expense', 'expense category') }}
 
-  <h2 class="block-title" style="margin-top:24px; color: var(--accent);">Presuny</h2>
+  <h2 class="block-title" style="margin-top:24px; color: var(--accent);">Transfers</h2>
   {{ render_list(transfer_roots, by_parent, 'transfer') }}
-  {{ add_root_form('transfer', 'kategória presunu') }}
+  {{ add_root_form('transfer', 'transfer category') }}
 
   <p style="color:var(--ink-3); font-size:12px; margin-top:24px;">
-    Pri zmazaní: transakcie sa stanú nezaradenými, podkategórie sa stanú root kategóriami, pravidlá sa zmažú.
+    On delete: transactions become uncategorized, subcategories become root categories, and rules are removed.
   </p>
 {% endblock %}

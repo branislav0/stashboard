@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Transakcie{% endblock %}
-{% block heading %}Všetky transakcie{% endblock %}
+{% block title %}Transactions{% endblock %}
+{% block heading %}All transactions{% endblock %}
 
 {% block topbar_actions %}
   <form method="post" action="/categorize-ai" class="inline" style="margin:0;"
-        onsubmit="this.querySelector('button').textContent='⏳ AI rozmýšľa…'; this.querySelector('button').disabled=true;">
-    <button class="btn" type="submit" title="Pošle nezaradené tx do AI">🤖 AI categorize</button>
+        onsubmit="this.querySelector('button').textContent='⏳ AI is thinking…'; this.querySelector('button').disabled=true;">
+    <button class="btn" type="submit" title="Send uncategorized transactions to the AI model">🤖 AI categorize</button>
   </form>
   <a class="btn{% if uncat %} btn-primary{% endif %}" href="/transactions?uncat={% if uncat %}0{% else %}1{% endif %}{% if category %}&category={{ category }}{% endif %}">
-    {% if uncat %}Všetky{% else %}Len nezaradené{% endif %}
+    {% if uncat %}All{% else %}Uncategorized only{% endif %}
   </a>
   {% if category %}
-    <a class="btn" href="/transactions?uncat={{ uncat }}">✕ Zruš filter</a>
+    <a class="btn" href="/transactions?uncat={{ uncat }}">✕ Clear filter</a>
   {% endif %}
 {% endblock %}
 
@@ -30,26 +30,26 @@
     <input type="hidden" name="uncat" value="{{ uncat }}">
     {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
     <label style="display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--ink-3);">
-      Od
+      From
       <input type="date" name="date_from" value="{{ date_from }}">
     </label>
     <label style="display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--ink-3);">
-      Do
+      To
       <input type="date" name="date_to" value="{{ date_to }}">
     </label>
     <label style="display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--ink-3);">
-      Suma od
+      Amount from
       <input type="number" step="0.01" name="amount_min" value="{{ amount_min }}" style="width:90px;">
     </label>
     <label style="display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--ink-3);">
-      Suma do
+      Amount to
       <input type="number" step="0.01" name="amount_max" value="{{ amount_max }}" style="width:90px;">
     </label>
     <label style="display:flex; flex-direction:column; gap:3px; font-size:11px; color:var(--ink-3); flex:1; min-width:160px;">
-      Hľadať
-      <input type="text" name="q" value="{{ q }}" placeholder="counterparty / info / poznámka">
+      Search
+      <input type="text" name="q" value="{{ q }}" placeholder="counterparty / info / note">
     </label>
-    <button class="btn btn-primary" type="submit">Filtrovať</button>
+    <button class="btn btn-primary" type="submit">Filter</button>
     {% if date_from or date_to or amount_min or amount_max or q %}
       <a class="btn" href="/transactions?uncat={{ uncat }}{% if category %}&category={{ category }}{% endif %}">✕</a>
     {% endif %}
@@ -57,19 +57,19 @@
 
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
     <h2 class="block-title">
-      {{ txs|length }} transakcií
-      {% if filter_category_name %}<span style="color:var(--accent); margin-left:8px;">· kategória: {{ filter_category_name }}</span>{% endif %}
+      {{ txs|length }} transactions
+      {% if filter_category_name %}<span style="color:var(--accent); margin-left:8px;">· category: {{ filter_category_name }}</span>{% endif %}
     </h2>
   </div>
 
   <table class="data">
     <tr>
-      <th>Dátum</th>
-      <th>Účet</th>
+      <th>Date</th>
+      <th>Account</th>
       <th>Counterparty</th>
       <th>Info</th>
-      <th class="num">Suma</th>
-      <th>Kategória</th>
+      <th class="num">Amount</th>
+      <th>Category</th>
     </tr>
     {% for t in txs %}
       <tr>
@@ -91,8 +91,8 @@
       </tr>
     {% endfor %}
     {% if not txs %}
-      <tr><td colspan="6" style="text-align:center; color:var(--ink-3); padding:24px;">Žiadne transakcie</td></tr>
+      <tr><td colspan="6" style="text-align:center; color:var(--ink-3); padding:24px;">No transactions</td></tr>
     {% endif %}
   </table>
-  <p style="font-size:11px; color:var(--ink-3); margin-top:10px;">Zobrazených max 500. Pre úpravu kategórie klikni na účet.</p>
+  <p style="font-size:11px; color:var(--ink-3); margin-top:10px;">Showing at most 500. To change a category, open the account.</p>
 {% endblock %}

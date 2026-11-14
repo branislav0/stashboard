@@ -1,12 +1,12 @@
-"""Vygeneruje samostatnú demo databázu s mock dátami pre screenshoty/portfólio.
+"""Generate a standalone demo database with mock data for screenshots.
 
-Nepoužíva reálne dáta. Reálnej finance.db sa nedotkne — píše len do cesty
-z DATABASE_PATH (default: demo.db) a pre istotu odmietne prepísať finance.db.
+Uses no real data and never touches a real finance.db — it only writes to the path
+in DATABASE_PATH (default: demo.db) and refuses to overwrite finance.db.
 
-Použitie:
+Usage:
     DATABASE_PATH=demo.db uv run python scripts/seed_demo.py
 
-Potom appku spusti nad demo DB:
+Then run the app against the demo DB:
     DATABASE_PATH=demo.db uv run python -m finance.main
 """
 
@@ -19,10 +19,10 @@ import sys
 from datetime import date
 from pathlib import Path
 
-# Cesta k demo DB — nastav PRED importom finance.db (číta env za behu).
+# Demo DB path — set BEFORE importing finance.db (it reads the env at runtime).
 DB_PATH = os.environ.setdefault("DATABASE_PATH", "demo.db")
 if Path(DB_PATH).name == "finance.db":
-    sys.exit("ODMIETNUTÉ: DATABASE_PATH ukazuje na finance.db. Demo nesmie prepísať reálne dáta.")
+    sys.exit("REFUSED: DATABASE_PATH points to finance.db. The demo must not overwrite real data.")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from finance import db  # noqa: E402
@@ -44,10 +44,10 @@ def _raw(counterparty: str, info: str, amount: str, currency: str, cd: str) -> s
 
 
 def main() -> None:
-    db.init_db()  # postaví schému + migrácie (a nasype default kategórie)
+    db.init_db()  # builds schema + migrations (and seeds default categories)
 
     with db.connect() as conn:
-        # vyčisti všetko – chceme len pár kategórií a mock dáta
+        # wipe everything – we only want a few categories and mock data
         for tbl in (
             "category_rules",
             "transactions",
@@ -58,16 +58,16 @@ def main() -> None:
         ):
             conn.execute(f"DELETE FROM {tbl}")
 
-        # --- session (FK pre accounts) ---
+        # --- session (FK for accounts) ---
         conn.execute(
             "INSERT INTO sessions (session_id, aspsp_name, aspsp_country) VALUES (?, ?, ?)",
             ("demo-session", "Demo Bank", "CZ"),
         )
 
-        # --- účty: CZK (hlavný) + EUR (multi-currency ukážka) ---
+        # --- accounts: CZK (main) + EUR (multi-currency showcase) ---
         acc = {}
         for key, iban, ccy, name in [
-            ("czk", "CZ0000000000000000000001", "CZK", "Bežný účet"),
+            ("czk", "CZ0000000000000000000001", "CZK", "Current account"),
             ("eur", "LT000000000000000002", "EUR", "Revolut"),
         ]:
             cur = conn.execute(
@@ -77,18 +77,18 @@ def main() -> None:
             )
             acc[key] = cur.lastrowid
 
-        # --- pár kategórií ---
+        # --- a few categories ---
         cats = {}
         cat_def = [
-            ("Výplata", "income"),
-            ("Potraviny", "expense"),
-            ("Reštaurácie", "expense"),
-            ("Doprava", "expense"),
-            ("Bývanie", "expense"),
-            ("Zábava", "expense"),
+            ("Salary", "income"),
+            ("Groceries", "expense"),
+            ("Restaurants", "expense"),
+            ("Transport", "expense"),
+            ("Housing", "expense"),
+            ("Entertainment", "expense"),
             ("Subscriptions", "expense"),
-            ("Sporenie", "expense"),  # sleduje ho sporiaci tracker
-            ("Interné presuny / FX", "transfer"),
+            ("Savings", "expense"),  # tracked by the savings goal
+            ("Internal transfers / FX", "transfer"),
         ]
         for name, kind in cat_def:
             cur = conn.execute(
@@ -97,22 +97,22 @@ def main() -> None:
             )
             cats[name] = cur.lastrowid
 
-        # rozpočty pre master plan
+        # monthly budgets
         for name, budget in [
-            ("Potraviny", 13000),
-            ("Reštaurácie", 5000),
-            ("Doprava", 7000),
-            ("Zábava", 4000),
+            ("Groceries", 13000),
+            ("Restaurants", 5000),
+            ("Transport", 7000),
+            ("Entertainment", 4000),
         ]:
             conn.execute(
                 "UPDATE categories SET monthly_budget_czk = ? WHERE id = ?", (budget, cats[name])
             )
 
-        # pár pravidiel (nech rules page nie je prázdna)
+        # a few rules (so the rules page is not empty)
         for cat, pattern in [
             ("Subscriptions", "netflix|spotify|youtube"),
-            ("Potraviny", "lidl|albert|billa|tesco|kaufland"),
-            ("Doprava", "shell|omv|mhd|dpp"),
+            ("Groceries", "lidl|albert|billa|tesco|kaufland"),
+            ("Transport", "shell|omv|mhd|dpp"),
         ]:
             conn.execute(
                 "INSERT INTO category_rules (category_id, pattern, field, priority) "
@@ -120,7 +120,7 @@ def main() -> None:
                 (cats[cat], pattern),
             )
 
-        # --- transakcie ---
+        # --- transactions ---
         seq = 0
 
         def tx(account, d, amount, ccy, cd, counterparty, info, cat, tx_type):
@@ -155,48 +155,48 @@ def main() -> None:
         czk, eur = acc["czk"], acc["eur"]
         last_czk = last_eur = None
 
-        # 6 mesiacov: január → jún 2026
+        # 6 months: January → June 2026
         for m in range(1, 7):
             day_cap = TODAY.day - 2 if m == TODAY.month else 27
 
             def rday(lo, hi):
                 return date(2026, m, min(random.randint(lo, hi), day_cap))
 
-            # príjem: výplata
+            # income: salary
             tx(
                 czk,
                 date(2026, m, min(2, day_cap)),
                 random.uniform(100000, 108000),
                 "CZK",
                 "CRDT",
-                "Zamestnávateľ s.r.o.",
-                "Mzda",
-                "Výplata",
-                "Prijatý prevod",
+                "Employer Ltd.",
+                "Salary payment",
+                "Salary",
+                "Incoming transfer",
             )
-            # bývanie (trvalý príkaz)
+            # housing (standing order)
             tx(
                 czk,
                 date(2026, m, min(5, day_cap)),
                 24000,
                 "CZK",
                 "DBIT",
-                "Prenájom bytu",
-                "Nájom",
-                "Bývanie",
-                "Trvalý príkaz",
+                "Apartment rental",
+                "Rent",
+                "Housing",
+                "Standing order",
             )
-            # sporenie (buffer) — ~66k/mes → ~400k za 6 mes → 40 % cieľa 1 000 000
+            # savings (buffer) — ~66k/month → ~400k over 6 months → 40 % of a 1,000,000 goal
             tx(
                 czk,
                 date(2026, m, min(3, day_cap)),
                 random.uniform(62000, 70000),
                 "CZK",
                 "DBIT",
-                "Sporiaci účet",
-                "Mesačné sporenie",
-                "Sporenie",
-                "Trvalý príkaz",
+                "Savings account",
+                "Monthly savings",
+                "Savings",
+                "Standing order",
             )
             # subscriptions
             for svc, amt in [("Netflix", 239), ("Spotify", 169), ("YouTube Premium", 179)]:
@@ -207,11 +207,11 @@ def main() -> None:
                     "CZK",
                     "DBIT",
                     svc,
-                    "Predplatné",
+                    "Subscription",
                     "Subscriptions",
-                    "Kartová platba",
+                    "Card payment",
                 )
-            # potraviny
+            # groceries
             for _ in range(random.randint(6, 9)):
                 tx(
                     czk,
@@ -220,11 +220,11 @@ def main() -> None:
                     "CZK",
                     "DBIT",
                     random.choice(groceries),
-                    "Nákup",
-                    "Potraviny",
-                    "Kartová platba",
+                    "Purchase",
+                    "Groceries",
+                    "Card payment",
                 )
-            # reštaurácie
+            # restaurants
             for _ in range(random.randint(3, 5)):
                 tx(
                     czk,
@@ -234,10 +234,10 @@ def main() -> None:
                     "DBIT",
                     random.choice(restaurants),
                     "",
-                    "Reštaurácie",
-                    "Kartová platba",
+                    "Restaurants",
+                    "Card payment",
                 )
-            # doprava
+            # transport
             tx(
                 czk,
                 rday(1, 5),
@@ -245,9 +245,9 @@ def main() -> None:
                 "CZK",
                 "DBIT",
                 "DPP MHD",
-                "Mesačník",
-                "Doprava",
-                "Kartová platba",
+                "Monthly pass",
+                "Transport",
+                "Card payment",
             )
             for _ in range(random.randint(1, 2)):
                 tx(
@@ -257,11 +257,11 @@ def main() -> None:
                     "CZK",
                     "DBIT",
                     random.choice(fuel),
-                    "Tankovanie",
-                    "Doprava",
-                    "Kartová platba",
+                    "Fuel",
+                    "Transport",
+                    "Card payment",
                 )
-            # zábava
+            # entertainment
             for _ in range(random.randint(1, 3)):
                 tx(
                     czk,
@@ -271,14 +271,18 @@ def main() -> None:
                     "DBIT",
                     random.choice(fun),
                     "",
-                    "Zábava",
-                    "Kartová platba",
+                    "Entertainment",
+                    "Card payment",
                 )
 
-            # EUR účet – pár online nákupov
+            # EUR account – a few online purchases
             for _ in range(random.randint(2, 4)):
-                cat = random.choice(["Zábava", "Reštaurácie", "Potraviny"])
-                merch = {"Zábava": "Steam", "Reštaurácie": "Uber Eats", "Potraviny": "Amazon"}[cat]
+                cat = random.choice(["Entertainment", "Restaurants", "Groceries"])
+                merch = {
+                    "Entertainment": "Steam",
+                    "Restaurants": "Uber Eats",
+                    "Groceries": "Amazon",
+                }[cat]
                 tx(
                     eur,
                     rday(1, 27),
@@ -288,19 +292,19 @@ def main() -> None:
                     merch,
                     "Online",
                     cat,
-                    "Kartová platba",
+                    "Card payment",
                 )
 
-        # zostatky? appka berie z transakcií, netreba.
+        # balances? the app derives them from transactions, not needed.
         last_czk, last_eur  # noqa
 
     # report
     with db.connect() as conn:
         n = conn.execute("SELECT COUNT(*) FROM transactions").fetchone()[0]
-    print(f"Demo DB hotová: {DB_PATH}")
-    print(f"  účty: 2 (CZK + EUR), kategórie: {len(cat_def)}, transakcie: {n}")
+    print(f"Demo DB ready: {DB_PATH}")
+    print(f"  accounts: 2 (CZK + EUR), categories: {len(cat_def)}, transactions: {n}")
     print()
-    print("Spusti appku nad demo DB:")
+    print("Run the app against the demo DB:")
     print(f"  DATABASE_PATH={DB_PATH} uv run python -m finance.main")
 
 

@@ -11,7 +11,7 @@ cashflow, budgets, and savings progress. Single-user and self-hosted: it binds t
 - **Categorizes** two ways: prioritized **regex rules** and optional **AI
   categorization**; manual overrides always win and survive re-sync.
 - **Multi-currency dashboard** — per-currency KPIs, cashflow chart, monthly view,
-  category budgets (master plan), and a savings tracker with ETA.
+  per-category budgets, and a savings tracker with ETA.
 - Converts EUR ↔ CZK using **CNB** (Czech National Bank) daily rates.
 
 ## How it works
