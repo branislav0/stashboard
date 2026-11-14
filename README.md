@@ -1,15 +1,15 @@
-# Groš
+# Stashboard
 
-Self-hosted personal finance dashboard. Aggregates bank transactions from SK/LT/CZ accounts, categorizes them, and tracks cashflow and savings goals. Runs on a Raspberry Pi 5, reachable only over Tailscale.
+Self-hosted personal finance dashboard. Aggregates bank transactions from multiple accounts and currencies, categorizes them, and tracks cashflow and savings goals. Runs on any small always-on machine (a home server or single-board computer is enough) and is meant to stay behind a VPN or reverse proxy.
 
 **Status:** v0.5 · single-user · fully usable.
 
 ## Features
 
-- **3 banks via PSD2** (Enable Banking) — Revolut LT, ČSOB SK, Tatra banka — plus CSV import for ČSOB CZ
+- **Bank sync via PSD2** (Enable Banking) — e.g. Revolut, ČSOB SK, Tatra banka — plus CSV import for ČSOB CZ
 - **Multi-currency dashboard** — per-currency KPIs, cashflow chart, savings tracker with ETA
 - **Auto-categorization** — prioritized regex rules; manual overrides survive re-sync
-- **Auth** — Argon2 + signed session cookie, bound to `127.0.0.1` (exposed via Tailscale)
+- **Auth** — Argon2 + signed session cookie, bound to `127.0.0.1` (expose it through your own VPN or reverse proxy)
 
 ## Stack
 
@@ -20,12 +20,12 @@ Python 3.13 · FastAPI · Jinja2 · SQLite (WAL) · `uv`. No JS framework, no bu
 ```
 ┌─────────────┐    PSD2 OAuth    ┌─────────────────────┐
 │   Browser   │ ───────────────> │  Enable Banking API │
-│ (Tailscale) │                  └─────────────────────┘
+│ (VPN/proxy) │                  └─────────────────────┘
 └─────┬───────┘                            │
       │ HTTPS                              │ tx data
       ▼                                    ▼
 ┌──────────────────────────────────────────────────┐
-│  FastAPI app (RPi 5)                             │
+│  FastAPI app (your server)                       │
 │  ┌─────────┐  ┌──────────┐  ┌─────────────────┐  │
 │  │ routes/ │─▶│ db.py    │─▶│ SQLite (WAL)    │  │
 │  │ main.py │  │ auth.py  │  │ data/finance.db │  │
@@ -37,8 +37,8 @@ Python 3.13 · FastAPI · Jinja2 · SQLite (WAL) · `uv`. No JS framework, no bu
 ## Run
 
 ```bash
-git clone https://github.com/branislav0/finance-dashboard
-cd finance-dashboard
+git clone https://github.com/branislav0/stashboard
+cd stashboard
 cp .env.example .env       # APP_SECRET_KEY, EB credentials
 uv sync
 uv run python -m finance.set_password   # set a password

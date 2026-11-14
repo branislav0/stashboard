@@ -1,12 +1,12 @@
-# Groš — Architecture
+# Stashboard — Architecture
 
 Personal finance dashboard: pulls bank transactions, categorizes them, and shows
-cashflow, budgets, and savings progress. Single-user, self-hosted on a Raspberry
-Pi 5, reachable only over Tailscale (or `127.0.0.1` locally).
+cashflow, budgets, and savings progress. Single-user and self-hosted: it binds to
+`127.0.0.1` and is meant to be reached through a VPN or reverse proxy.
 
 ## What it does
 
-- **Imports transactions** over PSD2 / open banking (Enable Banking) — Revolut LT,
+- **Imports transactions** over PSD2 / open banking (Enable Banking) — e.g. Revolut,
   ČSOB SK, Tatra banka — plus **CSV import** for ČSOB CZ.
 - **Categorizes** two ways: prioritized **regex rules** and optional **AI
   categorization**; manual overrides always win and survive re-sync.
@@ -20,7 +20,7 @@ Server-rendered **FastAPI** app (Jinja2 templates, no JS framework, no build ste
 **SQLite** (WAL) for storage, run with `uv`.
 
 ```
-Browser ──HTTPS (Tailscale)──▶ FastAPI (RPi 5)
+Browser ──HTTPS (VPN/proxy)──▶ FastAPI
                                   │
         ┌─────────────────────────┼──────────────────────────┐
         ▼                         ▼                           ▼
@@ -41,7 +41,7 @@ Browser ──HTTPS (Tailscale)──▶ FastAPI (RPi 5)
   which only assigns a category above a confidence threshold. A category set manually
   in the UI is never overwritten.
 - **Auth** — single password (Argon2) + signed session cookie; the app binds to
-  `127.0.0.1` and is exposed only through Tailscale.
+  `127.0.0.1` and should only be exposed through a VPN or an authenticated reverse proxy.
 
 ## Known limitations / rough edges
 

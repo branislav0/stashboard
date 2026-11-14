@@ -1,5 +1,5 @@
 [project]
-name = "finance-dashboard"
+name = "stashboard"
 version = "0.1.0"
 description = "Self-hosted personal finance tracker — aggregates bank transactions via Enable Banking API"
 readme = "README.md"
