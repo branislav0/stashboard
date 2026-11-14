@@ -1,6 +1,6 @@
 [project]
 name = "stashboard"
-version = "0.1.0"
+version = "0.5.0"
 description = "Self-hosted personal finance tracker — aggregates bank transactions via Enable Banking API"
 readme = "README.md"
 requires-python = ">=3.11"

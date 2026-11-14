@@ -6,6 +6,8 @@ import sqlite3
 from contextlib import asynccontextmanager
 from datetime import date, timedelta
 from html import escape
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -22,6 +24,12 @@ from finance.providers.enablebanking import from_env as enablebanking_from_env
 load_dotenv()
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+try:
+    APP_VERSION = _pkg_version("stashboard")
+except PackageNotFoundError:  # running from a source tree without an install
+    APP_VERSION = "dev"
+templates.env.globals["app_version"] = APP_VERSION
 
 
 def _fmt(amount: float, currency: str = "", decimals: int = 0) -> str:
@@ -291,7 +299,7 @@ def _sidebar_context(request: Request | None = None) -> dict:
         "sidebar_income_total": _fmt(income_total, "CZK") if income_total else None,
         "sidebar_expense_total": _fmt(expense_total, "CZK") if expense_total else None,
         "accounts_count": len(accounts),
-        "sync_status": "sync: pri requeste",
+        "sync_status": "sync: on demand",
         "sb_month": sb_month,
         "sb_months_available": _sidebar_months(12),
     }
@@ -306,7 +314,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Stashboard", lifespan=lifespan)
+app = FastAPI(title="Stashboard", version=APP_VERSION, lifespan=lifespan)
 
 
 PUBLIC_PATHS = {"/login", "/healthz", "/logout"}
