@@ -6,6 +6,9 @@ in DATABASE_PATH (default: demo.db) and refuses to overwrite finance.db.
 Usage:
     DATABASE_PATH=demo.db uv run python scripts/seed_demo.py
 
+The data covers the six months ending today, so the dashboard's current month is never
+empty. Set DEMO_TODAY=YYYY-MM-DD to pin the end date (e.g. for reproducible screenshots).
+
 Then run the app against the demo DB:
     DATABASE_PATH=demo.db uv run python -m finance.main
 """
@@ -28,7 +31,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from finance import db  # noqa: E402
 
 random.seed(42)
-TODAY = date(2026, 6, 14)
+TODAY = date.fromisoformat(os.environ["DEMO_TODAY"]) if os.getenv("DEMO_TODAY") else date.today()
+
+
+def _last_months(n: int) -> list[tuple[int, int]]:
+    """(year, month) of the n months ending with TODAY's month, oldest first."""
+    y, m = TODAY.year, TODAY.month
+    out = []
+    for _ in range(n):
+        out.append((y, m))
+        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+    return out[::-1]
 
 
 def _raw(counterparty: str, info: str, amount: str, currency: str, cd: str) -> str:
@@ -155,17 +168,18 @@ def main() -> None:
         czk, eur = acc["czk"], acc["eur"]
         last_czk = last_eur = None
 
-        # 6 months: January → June 2026
-        for m in range(1, 7):
-            day_cap = TODAY.day - 2 if m == TODAY.month else 27
+        # the six months ending with the current one
+        for y, m in _last_months(6):
+            is_current = (y, m) == (TODAY.year, TODAY.month)
+            day_cap = max(1, min(TODAY.day - 2, 27)) if is_current else 27
 
             def rday(lo, hi):
-                return date(2026, m, min(random.randint(lo, hi), day_cap))
+                return date(y, m, min(random.randint(lo, hi), day_cap))
 
             # income: salary
             tx(
                 czk,
-                date(2026, m, min(2, day_cap)),
+                date(y, m, min(2, day_cap)),
                 random.uniform(100000, 108000),
                 "CZK",
                 "CRDT",
@@ -177,7 +191,7 @@ def main() -> None:
             # housing (standing order)
             tx(
                 czk,
-                date(2026, m, min(5, day_cap)),
+                date(y, m, min(5, day_cap)),
                 24000,
                 "CZK",
                 "DBIT",
@@ -189,7 +203,7 @@ def main() -> None:
             # savings (buffer) — ~66k/month → ~400k over 6 months → 40 % of a 1,000,000 goal
             tx(
                 czk,
-                date(2026, m, min(3, day_cap)),
+                date(y, m, min(3, day_cap)),
                 random.uniform(62000, 70000),
                 "CZK",
                 "DBIT",
