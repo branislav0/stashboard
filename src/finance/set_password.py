@@ -48,7 +48,7 @@ def main() -> int:
     if len(pw1) < 6:
         print("The password must be at least 6 characters long.", file=sys.stderr)
         return 1
-    pw2 = getpass.getpass("Zopakuj heslo: ")
+    pw2 = getpass.getpass("Repeat password: ")
     if pw1 != pw2:
         print("The passwords do not match.", file=sys.stderr)
         return 1

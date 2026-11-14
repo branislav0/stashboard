@@ -1,0 +1,26 @@
+# Quick start:
+#   cp .env.example .env
+#   docker compose run --rm stashboard python -m finance.set_password
+#   docker compose up -d        → http://127.0.0.1:8000
+services:
+  stashboard:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}   # set UID in your shell/.env if your user id is not 1000
+    image: stashboard:local
+    restart: unless-stopped
+    # Bound to localhost on purpose: put a VPN or an authenticated reverse proxy in front.
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_PATH: /data/finance.db
+    volumes:
+      - stashboard-data:/data
+      # The app reads its settings from this file (and set_password writes to it).
+      - ./.env:/app/.env
+      # Enable Banking private keys referenced from .env (optional).
+      - ./.secrets:/app/.secrets:ro
+
+volumes:
+  stashboard-data:

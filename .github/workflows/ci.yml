@@ -27,3 +27,21 @@ jobs:
 
       - name: Tests
         run: uv run pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t stashboard:ci .
+
+      - name: Smoke test
+        run: |
+          docker run -d --name stashboard -p 8000:8000 -e APP_SECRET_KEY=ci stashboard:ci
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8000/login > /dev/null && exit 0
+            sleep 1
+          done
+          docker logs stashboard
+          exit 1

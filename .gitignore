@@ -14,7 +14,7 @@ dist/
 .venv/
 venv/
 
-# Secrets — NIKDY do gitu
+# Secrets — never commit
 .env
 .env.local
 .env.*.local
@@ -27,7 +27,7 @@ venv/
 *.db-shm
 backups/
 
-# Bank statements — obsahujú citlivé finančné dáta, NIKDY do gitu
+# Bank statements — sensitive financial data, never commit
 *.csv
 
 # User screenshots (local workflow only)
@@ -45,5 +45,5 @@ Thumbs.db
 
 # Obsidian
 .obsidian/
-# Logs (uvicorn logy môžu obsahovať IP adresy klientov)
+# Logs (uvicorn logs may contain client IP addresses)
 *.log

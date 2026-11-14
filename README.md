@@ -49,6 +49,19 @@ uv run python -m finance.set_password   # set a password
 uv run python -m finance.main           # http://127.0.0.1:8000
 ```
 
+## Run with Docker
+
+```bash
+git clone https://github.com/branislav0/stashboard
+cd stashboard
+cp .env.example .env       # EB credentials (APP_SECRET_KEY is generated for you)
+docker compose run --rm stashboard python -m finance.set_password
+docker compose up -d       # http://127.0.0.1:8000
+```
+
+The database lives in the `stashboard-data` volume; Enable Banking keys are read from
+`./.secrets`. The port is published on `127.0.0.1` only — see [SECURITY.md](SECURITY.md).
+
 ## License
 
 AGPL-3.0-or-later. See [LICENSE](LICENSE).
